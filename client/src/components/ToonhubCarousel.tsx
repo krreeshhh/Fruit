@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * DESIGN PHILOSOPHY: Premium Character Showcase
@@ -12,22 +12,22 @@ import { useEffect, useState } from "react";
 
 const IMAGES = [
   {
-    src: "https://fifth-gentle-45902158.figma.site/_components/v2/4de492f6d9cf8244ad5293233e5c6f52407d42fc/1.02464a56.png",
-    bg: "#F4845F",
+    src: "/1x2.png",
+    bg: "#BA591E",
     panel: "#F79B7F",
   },
   {
-    src: "https://fifth-gentle-45902158.figma.site/_components/v2/4de492f6d9cf8244ad5293233e5c6f52407d42fc/2.b977faab.png",
+    src: "/1x2.png",
     bg: "#6BBF7A",
     panel: "#85CC92",
   },
   {
-    src: "https://fifth-gentle-45902158.figma.site/_components/v2/4de492f6d9cf8244ad5293233e5c6f52407d42fc/3.4df853b4.png",
+    src: "/1x2.png",
     bg: "#E882B4",
     panel: "#ED9DC4",
   },
   {
-    src: "https://fifth-gentle-45902158.figma.site/_components/v2/4de492f6d9cf8244ad5293233e5c6f52407d42fc/4.4457fbce.png",
+    src: "/1x2.png",
     bg: "#6EB5FF",
     panel: "#8DC4FF",
   },
@@ -37,6 +37,12 @@ export default function ToonhubCarousel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+  const swipeState = useRef({
+    active: false,
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+  });
 
   // Preload all images on mount
   useEffect(() => {
@@ -64,6 +70,52 @@ export default function ToonhubCarousel() {
     setTimeout(() => setIsAnimating(false), 650);
   };
 
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    swipeState.current = {
+      active: true,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+    };
+
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipeState.current.active || swipeState.current.pointerId !== e.pointerId) {
+      return;
+    }
+
+    const deltaX = e.clientX - swipeState.current.startX;
+    const deltaY = e.clientY - swipeState.current.startY;
+
+    if (Math.abs(deltaX) > 12 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      e.preventDefault();
+    }
+  };
+
+  const finishSwipe = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipeState.current.active || swipeState.current.pointerId !== e.pointerId) {
+      return;
+    }
+
+    const deltaX = e.clientX - swipeState.current.startX;
+    const deltaY = e.clientY - swipeState.current.startY;
+
+    if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      navigate(deltaX < 0 ? "next" : "prev");
+    }
+
+    swipeState.current.active = false;
+    swipeState.current.pointerId = -1;
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  };
+
   // Derive roles from activeIndex
   const center = activeIndex;
   const left = (activeIndex + 3) % 4;
@@ -88,13 +140,13 @@ export default function ToonhubCarousel() {
 
     if (role === "center") {
       return {
-        transform: `translateX(-50%) scale(${isMobile ? 1.25 : 1.68})`,
+        transform: `translateX(-50%) scale(${isMobile ? 1.08 : 1.68})`,
         filter: "blur(0px)",
         opacity: 1,
         zIndex: 20,
         left: "50%",
-        height: isMobile ? "60%" : "92%",
-        bottom: isMobile ? "22%" : 0,
+        height: isMobile ? "65%" : "82%",
+        bottom: isMobile ? "30%" : "20%",
         transition: baseTransition,
         willChange: baseWillChange,
       };
@@ -104,9 +156,9 @@ export default function ToonhubCarousel() {
         filter: "blur(2px)",
         opacity: 0.85,
         zIndex: 10,
-        left: isMobile ? "20%" : "30%",
-        height: isMobile ? "16%" : "28%",
-        bottom: isMobile ? "32%" : "12%",
+        left: isMobile ? "18%" : "30%",
+        height: isMobile ? "12%" : "28%",
+        bottom: isMobile ? "34%" : "14%",
         transition: baseTransition,
         willChange: baseWillChange,
       };
@@ -116,9 +168,9 @@ export default function ToonhubCarousel() {
         filter: "blur(2px)",
         opacity: 0.85,
         zIndex: 10,
-        left: isMobile ? "80%" : "70%",
-        height: isMobile ? "16%" : "28%",
-        bottom: isMobile ? "32%" : "12%",
+        left: isMobile ? "82%" : "70%",
+        height: isMobile ? "12%" : "28%",
+        bottom: isMobile ? "34%" : "14%",
         transition: baseTransition,
         willChange: baseWillChange,
       };
@@ -130,8 +182,8 @@ export default function ToonhubCarousel() {
         opacity: 1,
         zIndex: 5,
         left: "50%",
-        height: isMobile ? "13%" : "22%",
-        bottom: isMobile ? "32%" : "12%",
+        height: isMobile ? "10%" : "22%",
+        bottom: isMobile ? "34%" : "14%",
         transition: baseTransition,
         willChange: baseWillChange,
       };
@@ -155,7 +207,14 @@ export default function ToonhubCarousel() {
           width: "100%",
           height: "100vh",
           overflow: "hidden",
+          touchAction: "pan-y",
+          userSelect: "none",
+          cursor: "grab",
         }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={finishSwipe}
+        onPointerCancel={finishSwipe}
       >
         {/* Grain overlay */}
         <div
@@ -171,7 +230,7 @@ export default function ToonhubCarousel() {
           }}
         />
 
-        {/* Giant ghost text "3D SHAPE" */}
+        {/* Giant ghost text for the hero product */}
         <div
           style={{
             position: "absolute",
@@ -182,27 +241,27 @@ export default function ToonhubCarousel() {
             pointerEvents: "none",
             userSelect: "none",
             zIndex: 2,
-            top: "18%",
+            top: isMobile ? "10%" : "18%",
           }}
         >
           <div
             style={{
               fontFamily: "'Anton', sans-serif",
-              fontSize: "clamp(90px, 28vw, 380px)",
+              fontSize: isMobile ? "clamp(42px, 16vw, 72px)" : "clamp(78px, 24vw, 320px)",
               fontWeight: 900,
               color: "white",
               opacity: 1,
               lineHeight: 1,
               textTransform: "uppercase",
-              letterSpacing: "-0.02em",
+              letterSpacing: isMobile ? "-0.03em" : "-0.02em",
               whiteSpace: "nowrap",
             }}
           >
-            3D SHAPE
+            FRUIT POWDER
           </div>
         </div>
 
-        {/* Top-left brand label "TOONHUB" */}
+        {/* Top-left brand label */}
         <div
           style={{
             position: "absolute",
@@ -218,7 +277,7 @@ export default function ToonhubCarousel() {
           }}
           className="sm:left-8"
         >
-          TOONHUB
+          
         </div>
 
         {/* Carousel */}
@@ -243,7 +302,7 @@ export default function ToonhubCarousel() {
               >
                 <img
                   src={image.src}
-                  alt={`Character ${idx + 1}`}
+                  alt={`Mango powder package ${idx + 1}`}
                   style={{
                     width: "100%",
                     height: "100%",
@@ -280,7 +339,7 @@ export default function ToonhubCarousel() {
             }}
             className="sm:mb-3 sm:text-[22px]"
           >
-            TOONHUB FIGURINES
+            Fruit POWDER
           </p>
           <p
             style={{
@@ -290,11 +349,10 @@ export default function ToonhubCarousel() {
               lineHeight: 1.6,
               marginBottom: "1rem",
             }}
-            className="hidden sm:block sm:text-sm sm:mb-5"
+            className="sm:text-sm sm:mb-5"
           >
-            The artwork is stunning, shipped fully prepared. The finish is a
-            vision, the 3D craft is flawless. Many thanks! Wishing you the win.
-            Order now.
+            Freeze-dried mango powder with a bold tropical flavor and smooth
+            mixability. Perfect for drinks, desserts, and creative recipes.
           </p>
           <div
             style={{
@@ -305,6 +363,7 @@ export default function ToonhubCarousel() {
             {/* Left arrow button */}
             <button
               onClick={() => navigate("prev")}
+              onPointerDown={(e) => e.stopPropagation()}
               style={{
                 width: "3rem",
                 height: "3rem",
@@ -338,6 +397,7 @@ export default function ToonhubCarousel() {
             {/* Right arrow button */}
             <button
               onClick={() => navigate("next")}
+              onPointerDown={(e) => e.stopPropagation()}
               style={{
                 width: "3rem",
                 height: "3rem",
@@ -400,7 +460,7 @@ export default function ToonhubCarousel() {
             (e.currentTarget as HTMLAnchorElement).style.opacity = "0.95";
           }}
         >
-          DISCOVER IT
+          DISCOVER
           <ArrowRight
             size={20}
             strokeWidth={2.25}
